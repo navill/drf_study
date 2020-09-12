@@ -53,7 +53,6 @@ class FileView(ListModelMixin, RetrieveModelMixin, GenericAPIView):
     def get(self, request, *args, **kwargs):
         pk = kwargs['pk']
         instance = self.queryset.get(id=pk)
-        # get an open file handle (I'm just using a file attached to the model for this example):
         file_handle = instance.file.open()
 
         # send file
@@ -61,7 +60,6 @@ class FileView(ListModelMixin, RetrieveModelMixin, GenericAPIView):
         response['Content-Length'] = instance.file.size
         response['Content-Disposition'] = 'attachment; filename="%s"' % instance.file.name
         return response
-        # return self.list(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         file_serializer = FileManageSerializer(data=request.data)
