@@ -7,7 +7,7 @@ from rest_framework.decorators import api_view
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import *
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from accounts.models import User, FileModel
@@ -27,7 +27,7 @@ def create_user_view(request):
 class TestGenericView(ListModelMixin, CreateModelMixin, GenericAPIView):
     queryset = User.objects.all()
     serializer_class = UserCreateSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
@@ -35,12 +35,8 @@ class TestGenericView(ListModelMixin, CreateModelMixin, GenericAPIView):
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
 
-    def dispatch(self, request, *args, **kwargs):
-        if request.method.lower() in self.http_method_names:
-            handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
-        else:
-            handler = self.http_method_not_allowed
-        return handler(request, *args, **kwargs)
+    # def dispatch(self, request, *args, **kwargs):
+    #     return super().dispatch(request, *args, **kwargs)
 
 
 class FileView(ListModelMixin, RetrieveModelMixin, GenericAPIView):
