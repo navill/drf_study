@@ -27,7 +27,8 @@ def create_user_view(request):
 class TestGenericView(ListModelMixin, CreateModelMixin, GenericAPIView):
     queryset = User.objects.all()
     serializer_class = UserCreateSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
