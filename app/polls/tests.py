@@ -3,7 +3,7 @@ import datetime
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
-from rest_framework.test import APIRequestFactory, force_authenticate
+from rest_framework.test import APIRequestFactory, force_authenticate, APIClient
 
 # from accounts.models import User
 from accounts.views import TestGenericView
@@ -28,6 +28,7 @@ class QuestionModelTests(TestCase):
         self.assertIs(recent_question.was_published_recently(), True)
 
 
+# with APIRequestFactory()
 class TestGenericTest(TestCase):
     def setUp(self) -> None:
         self.factory = APIRequestFactory()
@@ -42,4 +43,21 @@ class TestGenericTest(TestCase):
     def test_authenticate_without_user(self):
         request = self.factory.get('/test/')
         response = TestGenericView.as_view()(request)
+        self.assertEqual(response.status_code, 401)
+
+
+# with APIClient
+class TestGenericTestWithAPIClient(TestCase):
+    def setUp(self) -> None:
+        self.user = User.objects.create_user(username='jh', email='test@test.com', password='test1234')
+        self.client = APIClient()
+
+    def test_authenticate_with_user(self):
+        self.client.force_authenticate(self.user)
+        response = self.client.get('/test/')
+        # response = TestGenericView.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+
+    def test_authenticate_without_user(self):
+        response = self.client.get('/test/')
         self.assertEqual(response.status_code, 401)
