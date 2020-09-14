@@ -137,3 +137,4 @@ USE_TZ = True
 STATIC_URL = '/static/'
 MEDIA_URL = '/storage/'
 MEDIA_ROOT = os.path.join(BASE_DIR, "storage")
+# DEFAULT_FILE_STORAGE = os.path.join(BASE_DIR, "storage")
