@@ -1,9 +1,18 @@
+import datetime
+
 from django.db import models
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.urls import reverse
 
 from accounts.utils import URLEnDecrypt
+
+
+def user_directory_path(instance, filename):
+    time = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    name, ext = filename.split('.')
+    print('??')
+    return '{0}/{1}_{2}.{3}'.format(instance.name, name, time, ext)
 
 
 class User(models.Model):
@@ -13,16 +22,22 @@ class User(models.Model):
     is_active = models.BooleanField(default=False)
 
 
+class PersonManager(models.Manager):
+    def authors(self):
+        return self.get_queryset().authors()
+
+    def editors(self):
+        return self.get_queryset().editors()
+
+
 class FileModel(models.Model):
     name = models.CharField(max_length=255)
-    file = models.FileField()
+    file = models.FileField(upload_to=user_directory_path)
     file_url = models.CharField(max_length=255, default='')
 
 
-@receiver(pre_save, sender=FileModel)
-def pre_save_user(sender, instance, **kwargs):
+@receiver(post_save, sender=FileModel)
+def post_save_user(sender, instance, **kwargs):
+    print(instance.file)
     url = URLEnDecrypt.encrypt(instance.file.url)  # /storage/alskdjrakldf....
-    a = reverse('polls:download', args=(url,))
-    print(a)
     instance.file_url = url
-
