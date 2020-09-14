@@ -51,15 +51,9 @@ class FileView(ListModelMixin, RetrieveModelMixin, GenericAPIView):
         else:
             return self.list(request, *args, **kwargs)
 
-    def retrieve(self, request, *args, **kwargs):
-        # get detail object
-        response = super().retrieve(request, *args, **kwargs)
-        return response
-
     def post(self, request, *args, **kwargs):
         file_serializer = FileManageSerializer(data=request.data, context={'request': request})
         if file_serializer.is_valid():
-
             file_serializer.save()
             return Response(file_serializer.data, status=status.HTTP_201_CREATED)
         else:
@@ -67,6 +61,7 @@ class FileView(ListModelMixin, RetrieveModelMixin, GenericAPIView):
 
 
 def download(request, path):
+    # todo: request.user에 따른 authentication
     decrypted_url = URLEnDecrypt.decrypt(path)
     decrypted_path = urllib.parse.unquote(decrypted_url)
 
@@ -78,6 +73,7 @@ def download(request, path):
         response = create_file_response(file_handler, file_name, file_path)
         return response
     else:
+        # todo: exception 추가 - 잘못된 파일 경로 입니다.
         raise Exception
 
 
@@ -94,18 +90,10 @@ def get_filename(path):
 
 
 def create_file_response(handler, file_name, path):
-    mime_type = mimetypes.guess_type(file_name)
+    mime_type, _ = mimetypes.guess_type(file_name)
     file_name = urllib.parse.quote(file_name.encode('utf-8'))
 
-    response = FileResponse(handler, content_type=mime_type[0])
+    response = FileResponse(handler, content_type=mime_type)
     response['Content-Length'] = str(os.path.getsize(path))
     response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(file_name)
     return response
-#
-#
-# def _file_download(response: dict):
-#     instance = response.data.serializer.instance
-#     file_handle = instance.file.open()
-#     response = FileResponse(file_handle, content_type='multipart/octet-stream')
-#     response['Content-Length'] = instance.file.size
-#     response['Content-Disposition'] = 'attachment; filename="%s"' % instance.file.name

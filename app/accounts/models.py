@@ -21,22 +21,7 @@ class User(models.Model):
     is_active = models.BooleanField(default=False)
 
 
-class PersonManager(models.Manager):
-    def authors(self):
-        return self.get_queryset().authors()
-
-    def editors(self):
-        return self.get_queryset().editors()
-
-
 class FileModel(models.Model):
     name = models.CharField(max_length=255)
     file = models.FileField(upload_to=user_directory_path)
     file_url = models.CharField(max_length=255, default='')
-
-
-@receiver(post_save, sender=FileModel)
-def post_save_user(sender, instance, **kwargs):
-    print(instance.file)
-    url = URLEnDecrypt.encrypt(instance.file.url)  # /storage/alskdjrakldf....
-    instance.file_url = url
