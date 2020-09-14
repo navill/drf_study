@@ -17,7 +17,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
 class FileManageSerializer(serializers.ModelSerializer):
     file = serializers.FileField()
     name = serializers.CharField()
+    file_url = serializers.CharField()
 
     class Meta:
         model = FileModel
-        fields = ['file', 'name']
+        fields = ['file', 'name', 'file_url']

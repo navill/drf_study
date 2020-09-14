@@ -61,3 +61,4 @@ class TestGenericTestWithAPIClient(TestCase):
     def test_authenticate_without_user(self):
         response = self.client.get('/test/')
         self.assertEqual(response.status_code, 401)
+
