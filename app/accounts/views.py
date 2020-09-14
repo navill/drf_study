@@ -71,11 +71,11 @@ def download(request, path):
     decrypted_path = urllib.parse.unquote(decrypted_url)
 
     file_name = get_filename(decrypted_path)
-    absolute_path = get_full_path(decrypted_path)
+    file_path = get_full_path(decrypted_path)
 
-    if os.path.exists(absolute_path):
-        file_handler = open(absolute_path, 'rb')
-        response = create_file_response(file_handler, file_name, absolute_path)
+    if os.path.exists(file_path):
+        file_handler = open(file_path, 'rb')
+        response = create_file_response(file_handler, file_name, file_path)
         return response
     else:
         raise Exception
