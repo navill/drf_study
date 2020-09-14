@@ -7,7 +7,7 @@ app_name = 'polls'
 urlpatterns = [
     path('user/create/', create_user_view),
     path('test/', TestGenericView.as_view(), name='test'),
-    path('upload/<int:pk>', FileView.as_view(), name='file_detail'),
     path('upload/', FileView.as_view(), name='upload'),
-    path('download/<str:path2>', download, name='download')
+    path('upload/<int:pk>', FileView.as_view(), name='file_detail'),
+    path('download/<str:path>', download, name='download'),
 ]
