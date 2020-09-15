@@ -2,6 +2,7 @@ from cryptography.fernet import Fernet
 
 
 class URLEnDecrypt:
+    # todo: key -> sercret file로 이동
     fern = Fernet(b'-LEZDdGOWGRYilzx0OGbROixG5ImgjGY40MhS0AHgNA=')
 
     @classmethod
