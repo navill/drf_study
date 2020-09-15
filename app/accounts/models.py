@@ -1,43 +1,18 @@
 import datetime
 
+from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.signals import pre_save, post_save
-from django.dispatch import receiver
-from django.urls import reverse
-
-from accounts.utils import URLEnDecrypt
 
 
+# todo: 날짜-> staff -> patient -> 파일이름_시간.ext 구조로 저장
 def user_directory_path(instance, filename):
-    time = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    day, time = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S').split('_')
     name, ext = filename.split('.')
-    print('??')
-    return '{0}/{1}_{2}.{3}'.format(instance.name, name, time, ext)
-
-
-class User(models.Model):
-    first_name = models.CharField(max_length=12)
-    last_name = models.CharField(max_length=12)
-    email = models.EmailField(unique=True, null=False, blank=False)
-    is_active = models.BooleanField(default=False)
-
-
-class PersonManager(models.Manager):
-    def authors(self):
-        return self.get_queryset().authors()
-
-    def editors(self):
-        return self.get_queryset().editors()
+    return f'{day}/{instance.user}/{instance.patient_name}/{name}_{time}.{ext}'
 
 
 class FileModel(models.Model):
-    name = models.CharField(max_length=255)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    patient_name = models.CharField(max_length=255)
     file = models.FileField(upload_to=user_directory_path)
-    file_url = models.CharField(max_length=255, default='')
-
-
-@receiver(post_save, sender=FileModel)
-def post_save_user(sender, instance, **kwargs):
-    print(instance.file)
-    url = URLEnDecrypt.encrypt(instance.file.url)  # /storage/alskdjrakldf....
-    instance.file_url = url
+    created_at = models.DateTimeField(auto_now_add=True)

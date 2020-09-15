@@ -163,3 +163,4 @@ dir_files/
 auth.py
 static/
 storage/
+app/key_file.py

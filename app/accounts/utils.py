@@ -1,15 +1,22 @@
-from cryptography.fernet import Fernet
+import time
+
+from cryptography.fernet import Fernet, InvalidToken
+
+from key_file import *
 
 
 class URLEnDecrypt:
-    fern = Fernet(b'-LEZDdGOWGRYilzx0OGbROixG5ImgjGY40MhS0AHgNA=')
+    fern = Fernet(KEY['fernet'])
 
     @classmethod
     def encrypt(cls, text):
-        enc_data = cls.fern.encrypt(text.encode('utf-8'))
+        enc_data = cls.fern.encrypt_at_time(text.encode('utf-8'), int(time.time()))
         return enc_data.decode('utf-8')
 
     @classmethod
     def decrypt(cls, text):
-        dec_data = cls.fern.decrypt(text.encode('utf-8'))
+        try:
+            dec_data = cls.fern.decrypt_at_time(text.encode('utf-8'), 30, int(time.time()))
+        except InvalidToken:
+            raise InvalidToken('expired token')
         return dec_data.decode('utf-8')
