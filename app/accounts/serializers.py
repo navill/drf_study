@@ -18,23 +18,23 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
 class FileManageSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False)
+    patient_name = serializers.CharField(required=True)
     file = serializers.FileField(use_url=False)
-    # name = serializers.CharField()
+    created_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = FileModel
-        fields = ['user', 'file']
-        # read_only_fields = ['user_id']
+        fields = ['user', 'patient_name', 'file', 'created_at']
+        read_only_fields = ['user']
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
-        encrypted_path = URLEnDecrypt.encrypt(instance.file.name)
+        encrypted_path = URLEnDecrypt.encrypt(str(instance.id))
         ret['url'] = reverse('polls:download', args=[encrypted_path], request=self.context['request'])
         return ret
 
     def create(self, validated_data: dict):
         try:
-            # user = self.context['request'].user
             file_obj = FileModel.objects.create(**validated_data)
         except Exception:
             raise

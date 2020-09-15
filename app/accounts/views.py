@@ -1,18 +1,15 @@
-# Create your views here.
 import mimetypes
 import os
 import urllib
 
-from django.conf import settings
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.http import FileResponse
 from django.db.models import QuerySet
+from django.http import FileResponse, HttpResponse
 from rest_framework.decorators import api_view
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import *
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from accounts.models import FileModel
@@ -34,7 +31,6 @@ def create_user_view(request):
 class TestGenericView(ListModelMixin, CreateModelMixin, GenericAPIView):
     queryset = User.objects.all()
     serializer_class = UserCreateSerializer
-    # permission_classes = [IsAuthenticated]
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
@@ -45,9 +41,9 @@ class TestGenericView(ListModelMixin, CreateModelMixin, GenericAPIView):
 
 
 class FileView(ListModelMixin, RetrieveModelMixin, GenericAPIView):
-    queryset = FileModel.objects.all()
+    queryset = FileModel.objects.all().order_by('-created_at')
     serializer_class = FileManageSerializer
-    permission_classes = [OwnerOnlyAccess]
+    permission_classes = [IsAuthenticated, OwnerOnlyAccess]
     parser_classes = (MultiPartParser, FormParser)
 
     def get(self, request, *args, **kwargs):
@@ -57,7 +53,6 @@ class FileView(ListModelMixin, RetrieveModelMixin, GenericAPIView):
             return self.list(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        request.data['user'] = request.user.id
         file_serializer = FileManageSerializer(data=request.data, context={'request': request})
         if file_serializer.is_valid():
             file_serializer.save()
@@ -78,43 +73,32 @@ class FileView(ListModelMixin, RetrieveModelMixin, GenericAPIView):
         return queryset
 
 
-@login_required
 def download(request, path):
-    # todo: request.user에 따른 authentication
-    # login_required + owner = can access
-    # if OwnerOnlyAccess.has_object_permission(request, _, _):
-    #     pass
+    file_id = get_file_id(path)
+    file_obj = FileModel.objects.get(id=file_id)
+    if file_obj.user == request.user:
+        try:
+            # file_handler = open(file_path, 'rb')
+            handler = file_obj.file.open()
+            response = create_file_response(handler)
+            return response
+        except Exception:
+            raise FileNotFoundError('Invalid file path')
+    # return Response()  # for drf
+    return HttpResponse('can not access this url', status=status.HTTP_401_UNAUTHORIZED)
+
+
+def get_file_id(path):
     decrypted_url = URLEnDecrypt.decrypt(path)
-    decrypted_path = urllib.parse.unquote(decrypted_url)
-
-    file_name = get_filename(decrypted_path)
-    file_path = get_full_path(decrypted_path)
-
-    if os.path.exists(file_path):
-        file_handler = open(file_path, 'rb')
-        response = create_file_response(file_handler, file_name, file_path)
-        return response
-    else:
-        raise FileNotFoundError('Invalid file path')
+    return urllib.parse.unquote(decrypted_url)
 
 
-def get_full_path(path):
-    return os.path.join(settings.MEDIA_ROOT, path)
-
-
-def get_filename(path):
-    if ' ' in path:
-        path = path.replace(' ', '_')
-    splited_url = path.split('/')
-    file_name = splited_url[-1]
-    return file_name
-
-
-def create_file_response(handler, file_name, path):
+def create_file_response(handler):
+    file_name = os.path.basename(handler.name)
     mime_type, _ = mimetypes.guess_type(file_name)
-    file_name = urllib.parse.quote(file_name.encode('utf-8'))
+    quoted_name = urllib.parse.quote(file_name.encode('utf-8'))
 
     response = FileResponse(handler, content_type=mime_type)
-    response['Content-Length'] = str(os.path.getsize(path))
-    response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(file_name)
+    response['Content-Length'] = handler.size
+    response['Content-Disposition'] = 'attachment; filename=' + quoted_name
     return response
