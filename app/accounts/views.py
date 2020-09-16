@@ -5,6 +5,7 @@ import urllib
 from django.contrib.auth.models import User
 from django.db.models import QuerySet
 from django.http import FileResponse, HttpResponse
+from oauth2_provider.views.mixins import ProtectedResourceMixin
 from rest_framework.decorators import api_view
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import *
@@ -14,7 +15,7 @@ from rest_framework.response import Response
 
 from accounts.models import FileModel
 from accounts.permissions import OwnerOnlyAccess
-from accounts.serializers import UserCreateSerializer, FileManageSerializer
+from accounts.serializers import UserCreateSerializer, FileManageSerializer, UserSerializer
 from accounts.utils import URLEnDecrypt
 
 
@@ -102,3 +103,4 @@ def create_file_response(handler):
     response['Content-Length'] = handler.size
     response['Content-Disposition'] = 'attachment; filename=' + quoted_name
     return response
+
